@@ -1,0 +1,277 @@
+// Vio Flip — Prisma schema. Source: docs/api-data-model.md (8 entities).
+// Money: integer cents. 1 USDT = $1.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  buyer
+  seller
+  both
+  admin
+  support
+}
+
+enum TrustLevel {
+  new
+  verified
+  trusted
+  elite
+}
+
+enum IdVerificationStatus {
+  none
+  pending
+  approved
+  rejected
+}
+
+enum ListingStatus {
+  draft
+  pending_review
+  live
+  reserved
+  sold
+  paused
+  rejected
+}
+
+enum OrderStatus {
+  escrow_paid
+  delivering
+  awaiting_confirmation
+  safety_review
+  completed
+  refunded
+  disputed
+  cancelled
+}
+
+enum EscrowStep {
+  paid
+  delivering
+  confirming
+  safety_review
+  paid_out
+}
+
+enum DisputeStatus {
+  none
+  open
+  resolved_refund
+  resolved_release
+}
+
+enum WalletTxType {
+  topup
+  escrow_hold
+  escrow_release
+  payout
+  withdraw
+  refund
+  fee
+}
+
+enum WalletTxStatus {
+  pending
+  completed
+  failed
+}
+
+enum HandoverType {
+  login
+  admin_invite
+  owner_transfer
+}
+
+model User {
+  id                     String               @id @default(uuid())
+  username               String               @unique
+  email                  String               @unique
+  googleSub              String?              @unique
+  avatarUrl              String?
+  role                   Role                 @default(both)
+  trustLevel             TrustLevel           @default(new)
+  emailVerified          Boolean              @default(false)
+  idVerified             Boolean              @default(false)
+  idVerificationStatus   IdVerificationStatus @default(none)
+  lastOnlineAt           DateTime?
+  completedDeals         Int                  @default(0)
+  totalSalesCents        Int                  @default(0)
+  ratingAvg              Decimal?             @db.Decimal(2, 1)
+  ratingCount            Int                  @default(0)
+  walletBalanceCents     Int                  @default(0)
+  notificationPrefs      Json?
+  isBanned               Boolean              @default(false)
+  createdAt              DateTime             @default(now())
+  updatedAt              DateTime             @updatedAt
+  listings               Listing[]
+  ordersBought           Order[]              @relation("BuyerOrders")
+  ordersSold             Order[]              @relation("SellerOrders")
+  walletTransactions     WalletTransaction[]
+  reviewsGiven           Review[]             @relation("Reviewer")
+  reviewsReceived        Review[]             @relation("ReviewSeller")
+  notifications          Notification[]
+}
+
+model Category {
+  id           String    @id @default(uuid())
+  slug         String    @unique
+  name         String
+  icon         String
+  parentId     String?
+  listingCount Int       @default(0)
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  listings     Listing[]
+}
+
+model Listing {
+  id                 String        @id @default(uuid())
+  sellerId           String
+  seller             User          @relation(fields: [sellerId], references: [id])
+  categoryId         String
+  category           Category      @relation(fields: [categoryId], references: [id])
+  platform           String
+  assetType          String
+  title              String
+  publicUrl          String
+  priceCents         Int
+  followers          Int           @default(0)
+  monthlyIncomeCents Int?
+  audienceCountries  String[]
+  niche              String?
+  isMonetized        Boolean       @default(false)
+  monetizationNote   String?
+  ownershipVerified  Boolean       @default(false)
+  ownershipCode      String?
+  ownershipVerifiedAt DateTime?
+  description        String?
+  screenshots        String[]
+  status             ListingStatus @default(draft)
+  views              Int           @default(0)
+  chatCount          Int           @default(0)
+  strengthScore      Int           @default(0)
+  publishedAt        DateTime?
+  soldAt             DateTime?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  orders             Order[]
+}
+
+model Order {
+  id                  String        @id @default(uuid())
+  dealNumber          Int           @unique @default(autoincrement())
+  listingId           String
+  listing             Listing       @relation(fields: [listingId], references: [id])
+  buyerId             String
+  buyer               User          @relation("BuyerOrders", fields: [buyerId], references: [id])
+  sellerId            String
+  seller              User          @relation("SellerOrders", fields: [sellerId], references: [id])
+  priceCents          Int
+  buyerFeeCents       Int
+  sellerFeeCents      Int
+  totalCents          Int
+  sellerPayoutCents   Int
+  currency            String        @default("USD")
+  status              OrderStatus   @default(escrow_paid)
+  escrowStep          EscrowStep    @default(paid)
+  deliveryDeadlineAt  DateTime
+  confirmDeadlineAt   DateTime?
+  youtubeHoldUntilAt  DateTime?
+  deliveredAt         DateTime?
+  confirmedAt         DateTime?
+  paidOutAt           DateTime?
+  disputeReason       String?
+  disputeStatus       DisputeStatus @default(none)
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  walletTransactions  WalletTransaction[]
+  handover            Handover?
+  review              Review?
+}
+
+model WalletTransaction {
+  id             String        @id @default(uuid())
+  userId         String
+  user           User          @relation(fields: [userId], references: [id])
+  orderId        String?
+  order          Order?        @relation(fields: [orderId], references: [id])
+  type           WalletTxType
+  amountCents    Int
+  balanceAfterCents Int
+  method         String
+  txid           String?
+  status         WalletTxStatus @default(pending)
+  meta           Json?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+}
+
+model Review {
+  id         String   @id @default(uuid())
+  orderId    String   @unique
+  order      Order    @relation(fields: [orderId], references: [id])
+  reviewerId String
+  reviewer   User     @relation("Reviewer", fields: [reviewerId], references: [id])
+  sellerId   String
+  seller     User     @relation("ReviewSeller", fields: [sellerId], references: [id])
+  rating     Int
+  comment    String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Chat {
+  id                String        @id @default(uuid())
+  listingId         String?
+  orderId           String?
+  buyerId           String
+  sellerId          String
+  customOfferCents  Int?
+  customOfferStatus String        @default("none")
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  messages          ChatMessage[]
+}
+
+model ChatMessage {
+  id        String   @id @default(uuid())
+  chatId    String
+  chat      Chat     @relation(fields: [chatId], references: [id])
+  senderId  String
+  body      String
+  createdAt DateTime @default(now())
+  readAt    DateTime?
+}
+
+model Handover {
+  id               String       @id @default(uuid())
+  orderId          String       @unique
+  order            Order        @relation(fields: [orderId], references: [id])
+  payloadEncrypted String
+  handoverType     HandoverType
+  proofScreenshots String[]
+  deliveredAt      DateTime?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  type      String
+  title     String
+  refType   String?
+  refId     String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
