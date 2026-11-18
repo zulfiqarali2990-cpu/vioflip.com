@@ -13,7 +13,7 @@ Checked live on 2026-11-18 after the admin-panel edit (artifact v2).
 - Deep audit — VerifiedFlip, 443 listings, 17 categories, no public API, report page built (artifact verifiedflip-deep-audit).
 - Brand assets — 51 files, 3.7 MB in workspace/vio-flip/assets/ (logos, app icons, favicons, 7 category icons, 10 UI icons, social banner, Urbanist fonts).
 - Professional README — in repo and in workspace/vio-flip/github-push/README.md.
-- GitHub — commit bd3f494 on main, https://github.com/zulfiqarali2990-cpu/vioflip.com (10 files: README, package.json, Prisma schema, fees + escrow lib, docs). Verified via GitHub API.
+- GitHub — commit c86cd4a on main, https://github.com/zulfiqarali2990-cpu/vioflip.com (40 files: scaffold + specs + brand assets text). Verified via GitHub API.
 
 ## Not in the GitHub repo yet
 
@@ -21,9 +21,9 @@ Checked live on 2026-11-18 after the admin-panel edit (artifact v2).
 - Brand assets — binary PNG/ICO/TTF cannot go in a snapshot push; text assets (SVG icons, brand-colours.md, fonts.md) can go in a follow-up push.
 - Logo PNG — binary, needs a file upload, not a snapshot push.
 
-## Open decisions — need the user
+## Decisions (decided by user, 2026-11-18)
 
-- KYC provider for ID + selfie check.
-- Pakistan payment aggregator: Kpaisa vs Flux Pay vs ZurvaPay.
-- Stripe/PayPal entity country.
-- Dispute SLA in hours.
+- KYC: manual — team reviews ID card + selfie, no third-party KYC provider in v1.
+- Pakistan payments: Easypaisa official + AsaanPay (not Kpaisa / Flux Pay / ZurvaPay).
+- Stripe/PayPal entity: UK and USA.
+- Dispute SLA: 24/7 — disputes handled round the clock.

@@ -87,12 +87,12 @@ Notes:
 | Bank transfer | Manual, on by default |
 | Seller dashboard, shop insights (7/30/90 days) | Live |
 
-## Open decisions
+## Decisions (decided by user, 2026-11-18)
 
-- KYC provider for ID + selfie check.
-- Pakistan aggregator choice (Kpaisa vs Flux Pay vs ZurvaPay).
-- Stripe/PayPal entity country.
-- Dispute SLA in hours.
+- KYC: manual — team reviews ID card + selfie, no third-party KYC provider in v1.
+- Pakistan payments: Easypaisa official + AsaanPay (not Kpaisa / Flux Pay / ZurvaPay).
+- Stripe/PayPal entity: UK and USA.
+- Dispute SLA: 24/7 — disputes handled round the clock.
 
 ## Sources
 
